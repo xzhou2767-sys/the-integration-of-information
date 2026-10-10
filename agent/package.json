@@ -1,0 +1,26 @@
+{
+  "name": "trae-video-agent",
+  "version": "0.1.0",
+  "description": "Agent-version video processing app: MCP host orchestrating trae-video-mcp tools (analyze_video/get_transcript/get_frames) into brief/frames/watch/digest tasks with citable markdown evidence reports",
+  "type": "module",
+  "bin": {
+    "trae-video-agent": "dist/index.js"
+  },
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/index.js",
+    "check": "node dist/index.js check"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.30.0"
+  },
+  "devDependencies": {
+    "@types/node": "24.3.1",
+    "typescript": "5.9.2"
+  },
+  "license": "MIT"
+}

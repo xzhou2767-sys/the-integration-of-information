@@ -1,0 +1,97 @@
+# 安卓 APK 编译工具链与环境使用说明（工程文件）
+
+> 版本：1.0｜导出日期：2026-10-02｜来源：`.trae/skills/trae-server-deploy/SKILL.md` + 本机实测核验（路径、版本、AVD 均于导出当日验证存在）
+> 用途：本项目（Kotlin Multiplatform：core / server / client-app）安卓客户端出包、安装与模拟器验证的环境单一汇总。
+
+## 一、工具链位置与版本（已实测核验）
+
+| 组件 | 路径 | 版本 |
+|---|---|---|
+| JDK | `C:\Users\ASUS\AppData\Local\Temp\trae-tc\jdk-17.0.2`（`bin\java.exe`） | OpenJDK 17.0.2（2022-01-18） |
+| Gradle | `C:\Users\ASUS\AppData\Local\Temp\trae-tc\gradle-8.10.2\bin\gradle.bat` | 8.10.2 |
+| Android SDK | `C:\Users\ASUS\AppData\Local\Temp\trae-tc\android-sdk` | 含 build-tools / cmdline-tools / emulator / platform-tools / platforms / system-images / licenses |
+| adb | `C:\Users\ASUS\AppData\Local\Temp\trae-tc\android-sdk\platform-tools\adb.exe` | 1.0.41 |
+| 模拟器 | AVD 列表（`%USERPROFILE%\.android\avd\`）：Lab34 / trae-a15-arm / trae-a15-lite / trae-android15 / trae-arm64 | 常用设备 `emulator-5554`，屏幕 1080x2340 |
+| sdk.dir 绑定 | 项目根 `local.properties` → `sdk.dir=C:/Users/ASUS/AppData/Local/Temp/trae-tc/android-sdk` | — |
+
+> ⚠️ **重要风险**：整套工具链位于 `AppData\Local\Temp\trae-tc\`（Temp 目录），系统清理或手动清缓存会整体丢失。丢失后需重新下载 JDK17/Gradle 8.10.2/Android SDK（platform-tools + 对应 platforms + system-images）并重建 `local.properties`。**建议将 `trae-tc` 整目录迁移/备份到非 Temp 路径**（迁移后仅需更新 `local.properties` 与本文档路径）。
+
+## 二、出包标准流程（客户端 APK）
+
+```powershell
+$env:JAVA_HOME = "C:\Users\ASUS\AppData\Local\Temp\trae-tc\jdk-17.0.2"
+$gradle = "C:\Users\ASUS\AppData\Local\Temp\trae-tc\gradle-8.10.2\bin\gradle.bat"
+
+# 1. 版本号：client-app/build.gradle.kts 的 versionCode（+1）与 versionName 同步递增
+#    当前版本基准：0.5.8（versionCode 15）
+
+# 2. 构建（在项目根目录执行）
+& $gradle :client-app:assembleDebug --no-daemon -x test
+# 产物：client-app\build\outputs\apk\debug\client-app-debug.apk
+
+# 3. 复制为带版本号的交付物
+Copy-Item "client-app\build\outputs\apk\debug\client-app-debug.apk" "trae-info-client-<version>.apk" -Force
+```
+
+要点：
+- 必须先设置 `JAVA_HOME`（Gradle 不会自动找到 Temp 里的 JDK）。
+- `--no-daemon`：本项目约定（与服务器构建铁律一致，避免 daemon 残留占用）。
+- 只改 core/server 不涉及客户端时无需出包；改 `core` 模块会影响客户端，需重新出包。
+
+## 三、安装与启动（adb + 模拟器）
+
+```powershell
+$adb = "C:\Users\ASUS\AppData\Local\Temp\trae-tc\android-sdk\platform-tools\adb.exe"
+
+# 安装（覆盖安装保留数据）
+& $adb install -r "trae-info-client-<version>.apk"
+
+# 启动——注意 Activity 是 .android.MainActivity（不是 .MainActivity，血泪教训）
+& $adb shell am start -n com.trae.info.client/.android.MainActivity
+
+# 查看已连接设备
+& $adb devices
+```
+
+## 四、模拟器 UI 自动化测试（uiautomator 坐标法）
+
+**核心原则**：截图肉眼定位不可靠（图片缩放导致坐标偏差），一律用 uiautomator dump 取真实控件 bounds：
+
+```powershell
+$adb = "C:\Users\ASUS\AppData\Local\Temp\trae-tc\android-sdk\platform-tools\adb.exe"
+
+# 1. dump 控件树并拉回本地
+& $adb shell uiautomator dump /sdcard/ui.xml
+& $adb pull /sdcard/ui.xml .tmp-ui.xml
+
+# 2. 解析：正则匹配 text="..." 与 bounds="[x1,y1][x2,y2]"，点击中心 = ((x1+x2)/2, (x2-x2)/2 取整)
+# 3. 点击
+& $adb shell input tap <cx> <cy>
+
+# 4. 截图（用 Read 工具看图）
+& $adb shell screencap -p /sdcard/s.png; & $adb pull /sdcard/s.png .tmp-s.png
+
+# 5. 返回键
+& $adb shell input keyevent KEYCODE_BACK
+
+# 6. 屏幕物理尺寸（底部导航栏约 y=2230）
+& $adb shell wm size   # → 1080x2340
+```
+
+**本项目客户端已知页面要点**（历史验证沉淀）：
+- 底部导航五项：首页/订阅定制/信息流/信息偏好/更多（y≈2230，x 分别约 108/322/540/759/972）。
+- 信息流页：类目 chip 点击弹出 32 个类目选择列表；`ai-news` 显示名「人工智能 · 技术动态」，`intl-news` 显示「国际时事热点」。
+- 条目卡片点击弹出详情底部弹层（标题/来源/作者/标签/摘要/原文链接/分类）。
+- 验证要点清单：代理卡片（READY/节点/延迟）、抓取进程卡片（运行状态/间隔人性化显示）、信息流列表渲染、空态文案、详情弹层、个性化排序。
+- 临时截图/xml 一律用 `.tmp-` 前缀，验证完删除。
+
+## 五、通用注意事项（PowerShell 环境铁律）
+
+- PowerShell 用 `;` 不用 `&&`（旧版本不支持）；curl 一律用 `curl.exe`。
+- profile 的 PSSecurityException 报错是噪音，忽略即可（不影响命令实际执行）。
+- npm/npx 等若被脚本执行策略拦截，用 `npm.cmd` 形式调用。
+- 长构建建议后台执行，输出重定向日志文件后按需查看尾部。
+
+## 六、完整发布流程索引
+
+本文档只覆盖**本地安卓出包与模拟器验证**。完整发布（服务器部署 + 客户端出包 + 云端验证）见 `.trae/skills/trae-server-deploy/SKILL.md`；全体系现状见 `docs/PROJECT_SYSTEM.md`（版本基准：客户端 0.5.8 / versionCode 15）。

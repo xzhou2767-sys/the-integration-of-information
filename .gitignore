@@ -1,0 +1,84 @@
+# ============ 版本控制排除清单（阶段 0 · T0.1） ============
+# 依据：.trae/documents/remediation-plan-2026-09-25.md
+# 说明：本文件为「可漂移快照」类配置，随工具链变化更新。
+
+# ---- 构建产物 ----
+.gradle/
+.kotlin/
+build/
+*/build/
+out/
+
+# ---- Node 子项目（mcp/ 与 agent/ 各自独立构建，见 PROJECT_SYSTEM.md 4.5/4.6）----
+node_modules/
+*/node_modules/
+dist/
+*/dist/
+npm-debug.log*
+yarn-error.log*
+
+# ---- 本地环境配置（含 Android SDK 路径，不应入库）----
+local.properties
+local.properties*
+*.keystore
+*.jks
+
+# ---- 归档与源码包（体积大，不入库；备份本体见 backup/、archive/）----
+# 根目录 trae-src-v2.zip 等单文件可达 200MB+，入库会永久膨胀仓库历史
+*.zip
+*.tar.gz
+
+# ---- 非工程文件 ----
+*.docx
+
+# ---- 运行期数据（服务端 systemd WorkingDirectory=/opt/trae-info 下的 data/）----
+# 服务端会在 data/ 写入 config.json（含 AI Key）/ subscription.json /
+# summaries.json / translations.json / companion-items.json /
+# decision-store.json / feed-cache.json / server.log
+server/data/
+*-store.json
+summaries.json
+translations.json
+companion-items.json
+feed-cache.json
+
+# ---- 测试装置产出（T2.1：禁止写入源码树）----
+build/test-data/
+*.testdata/
+
+# ---- agent 报告（保留结构，忽略逐次产出；需留档时用 git add -f）----
+agent/reports/
+
+# ---- 临时与探针文件（审查发现根目录曾有 34 个残留）----
+.tmp-*
+tmp-*
+*.tmp
+.tmp-probe/
+
+# ---- 发布物（T0.4：dist/ 不得存放无版本标识产物）----
+*.apk
+*.apk
+# 注：本项目未提交 Gradle Wrapper（gradle/ 下仅 libs.versions.toml），
+# 构建依赖本机 Gradle 8.10.2。若将来补入 wrapper，需在此加 !gradle/wrapper/gradle-wrapper.jar
+
+# ---- IDE / OS ----
+.idea/
+*.iml
+.DS_Store
+Thumbs.db
+*.swp
+.vscode/
+
+# ---- 日志 ----
+*.log
+logs/
+xray.log
+
+# ---- 公开仓库排除：内部审计与部署细节（2026-10-10）----
+# 内部整改/审计过程记录：逐条列出已发现漏洞与待修项，公开发布等于公布自身攻击面
+.trae/documents/
+# 服务端部署流程细节（服务器布局、systemd、运维步骤）
+.trae/skills/trae-server-deploy/
+# 上述两类在 SDD 归档中的镜像副本
+the integration of information.project/archive/documents/
+the integration of information.project/archive/skills/trae-server-deploy/
