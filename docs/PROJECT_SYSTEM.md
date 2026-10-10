@@ -3,7 +3,7 @@
 > **文档定位**：本项目的唯一全体系工程文档，覆盖架构、能力、API、约定、演进路线。
 > **维护约定**：任何代码变更、架构调整、功能上线、部署、技术结论产出后，**必须同步更新本文件对应章节**（更新流程见技能 `project-system-sync`）。
 > **版本基准**：客户端 0.5.8（versionCode 15）｜服务端已部署于腾讯云 VPS｜服务端版本号规则见 §八
-> **最后更新**：2026-10-10（启用 git 与 SDD 规范驱动开发体系；新增 backup/ 备份单元与 SDD 归档根索引）
+> **最后更新**：2026-10-10（启用 git 与 SDD 规范驱动开发体系；建立公开远程仓库；新增 backup/ 备份单元与 SDD 归档根索引；基础设施信息与凭据全量脱敏）
 >
 > **文档两分法**（2026-09-25 起生效，用于判定该改哪个数、该走什么流程）：
 > 1. **可漂移快照** —— 类目/平台计数、文件清单、版本号、参数取值、持久化文件列表等**随版本自然变化**的事实。
@@ -427,6 +427,7 @@ AI 推断关键帧时间戳 → FFmpeg 抽帧 → OCR（详细档）+ 视觉描�
 | 　└ 项目宪法（目标/技术栈/路线图） | `the integration of information.project/constitution/` |
 | 　└ 功能规范（F01–F12，每功能一目录 + `_TEMPLATE`） | `the integration of information.project/specs/` |
 | **工程文档备份单元**（归档 + 还原方法 + SHA256，2026-10-10） | `backup/BACKUP-RESTORE.md` |
+| **远程仓库**（公开，2026-10-10 建立；main + 12 功能分支） | `https://github.com/xzhou2767-sys/the-integration-of-information` |
 | 决策核心 V2 工程实施方案（外部输入） | `C:\Users\ASUS\Documents\Codex\2026-09-15\zhe\outputs\重写决策核心与复用采集组件-工程实施方案.md` |
 | 视频内容提取三方向改进实施方案（外部输入，三份 v2.0 方向文档的上游依据） | `C:\Users\ASUS\Documents\Codex\2026-09-18\md-claude-vedio-agent-mcp-md\outputs\视频内容提取三方向改进实施方案.md` |
 | 技能：服务端部署 | `.trae/skills/trae-server-deploy/SKILL.md` |
